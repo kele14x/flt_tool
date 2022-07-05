@@ -1,0 +1,31 @@
+VIVADO ?= vivado -mode batch -nolog -nojou -notrace -source
+
+CLEAN_TARGETS += .Xil/
+CLEAN_TARGETS += *.cache/
+CLEAN_TARGETS += *.gen/
+CLEAN_TARGETS += *.hw/
+CLEAN_TARGETS += *.ip_user_files/
+CLEAN_TARGETS += *.sim/
+CLEAN_TARGETS += *.xpr
+CLEAN_TARGETS += *.log
+CLEAN_TARGETS += *.jou
+CLEAN_TARGETS += *.str
+
+.PHONY: help all project clean
+
+help:
+	@echo ""
+	@echo "Type 'make <target>' to start, where <target> could be:"
+	@echo ""
+	@echo "    all     - Make all jobs"
+	@echo "    project - Create Vivado project"
+	@echo "    clean   - Clean output files"
+	@echo "    help    - Print this message"
+
+all: project
+
+project:
+	$(VIVADO) vivado_project.tcl
+
+clean:
+	-$(RM) $(CLEAN_TARGET)

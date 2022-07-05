@@ -1,0 +1,93 @@
+##############################################################################
+# Set some variables before start
+##############################################################################
+
+# General information
+set script_version "0.1"
+set script_file [file tail [info script]]
+set required_vivado_version "2022.1.1"
+
+# Project information
+set project_name {{ project_name }}
+set part {{ part }}
+
+# Required Vivado version
+set project_dir {{ project_dir }}
+if { [info exists REQUIRED_VIVADO_VERSION] } {
+  set required_vivado_version REQUIRED_VIVADO_VERSION
+}
+
+# Source files list
+set src_files [list\
+{% for ifile in src_files %}"{{ ifile }}"\
+{% endfor %}]
+
+# OOC constraint files list
+set ooc_constr_files [list\
+{% for ifile in ooc_constr_files %}"{{ ifile }}"\
+{% endfor %}]
+
+# Normal constraint files list
+set constr_files [list\
+{% for ifile in constr_files %}"{{ ifile }}"\
+{% endfor %}]
+
+# Simulation files list
+set sim_files [list\
+{% for ifile in sim_files %}"{{ ifile }}"\
+{% endfor %}]
+
+
+##############################################################################
+# Start script
+##############################################################################
+
+# Basic information
+put "Vivado project setup script: $script_file"
+put "Scirpt version: $script_version"
+put "Current working directory: [pwd]"
+
+# Check current VIVADO version
+set current_vivado_version [version -short]
+if { ![string equal $required_vivado_version $current_vivado_version] } {
+  error "ERROR: Vivado version mismatch, expected $required_vivado_version, got $current_vivado_version.\n"
+  return 1
+}
+
+# Create project
+put "Create project $project_name under directory $project_dir"
+create_project -force -part $part $project_name $project_dir
+
+# Project property
+set_property -name {STEPS.SYNTH_DESIGN.ARGS.MORE OPTIONS} -value {-mode out_of_context} -objects [get_runs synth_1]
+set_property STEPS.SYNTH_DESIGN.ARGS.FLATTEN_HIERARCHY none [get_runs synth_1]
+set_property AUTO_INCREMENTAL_CHECKPOINT 0 [get_runs synth_1]
+
+# Add all design source files to current project
+foreach ifile $src_files {
+    put "Add design source file: $ifile"
+    add_files -norecurse $ifile
+}
+
+# Add OOC constraint files to current project
+foreach ifile $ooc_constr_files {
+    put "Add Out-of-Context constrains file: $ifile"
+    add_files -norecurse -fileset constrs_1 $ifile
+    set_property USED_IN {synthesis implementation out_of_context} [get_files $ifile]
+}
+
+# Add constraint files to current project
+foreach ifile $constr_files {
+    put "Add constrains file: $ifile"
+    add_files -norecurse -fileset constrs_1 $ifile
+}
+
+# Add all simulation files to current project.
+foreach ifile $sim_files {
+    put "Add simulation source file: $ifile"
+    add_files -norecurse -fileset sim_1 $ifile
+}
+
+# Start GUI
+puts "Launching GUI..."
+start_gui

@@ -1,0 +1,6 @@
+# Editor and IDE
+.idea
+
+# Python
+__pycache__/
+venv/
