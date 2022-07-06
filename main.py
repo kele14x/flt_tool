@@ -24,6 +24,12 @@ def parse_flt_file(flt_file: str, parsed_files: List[str] = None) -> List[str]:
     with open(flt_file, encoding='utf8') as fd:
         for line in fd:
             line = line.strip()
+
+            # Bypass empty or comment line
+            if len(line) == 0 or line.startswith('#'):
+                continue
+
+            # It should be normalized, so we use it as unique identifier
             line = os.path.abspath(os.path.join(base_dir, line))
 
             # Recursively parse .flt file, but take care cycle reference
@@ -70,7 +76,7 @@ def generate_files(base: str, name: str, file_lists: List[str]) -> None:
     )
 
     # Render and write target files
-    targets = ['Makefile', 'vivado_project.tcl']
+    targets = ['.gitignore', 'Makefile', 'vivado_project.tcl']
     for t in targets:
         template = env.get_template(t + '.jinja2')
         rendered = template.render(variables)
@@ -85,8 +91,8 @@ def generate_files(base: str, name: str, file_lists: List[str]) -> None:
             fd.write(rendered)
 
 
-if __name__ == '__main__':
-    """This scripts help you generate necessary files to quick restore a Vivado project."""
+def main(argv: List[str]) -> None:
+    """Main function."""
     # Build the CLI of script
     parser = argparse.ArgumentParser()
     parser.add_argument('flt',
@@ -105,7 +111,7 @@ if __name__ == '__main__':
                         dest='debug_level',
                         action='store_const',
                         const=logging.DEBUG)
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     # Set logging level to desired value
     logging.basicConfig(level=args.debug_level)
@@ -133,3 +139,11 @@ if __name__ == '__main__':
         sys.exit()
 
     generate_files(base_dir, name, file_list)
+
+
+if __name__ == '__main__':
+    """
+    This scripts help you generate necessary files to quick restore a Vivado 
+    project.
+    """
+    main(sys.argv[1:])
