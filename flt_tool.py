@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import argparse
 import logging
 import os.path
@@ -137,9 +138,8 @@ def main(argv: List[str]) -> None:
     if args.print_only:
         for item in file_list:
             print(item)
-        sys.exit()
-
-    generate_files(base_dir, name, file_list)
+    else:
+        generate_files(base_dir, name, file_list)
 
 
 if __name__ == '__main__':
