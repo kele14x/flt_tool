@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+"""
+flt_tool.py is a simple script to aid in Vivado project creation.
+"""
 import argparse
 import logging
 import os.path
@@ -6,6 +9,8 @@ import sys
 from typing import List
 
 from jinja2 import Environment, FileSystemLoader
+
+__version__ = '0.1.0'
 
 
 def parse_flt_file(flt_file: str, parsed_files: List[str] = None) -> List[str]:
@@ -63,6 +68,7 @@ def generate_files(base: str, name: str, file_lists: List[str]) -> None:
         os.mkdir(build_dir)
 
     variables = {
+        'version': __version__,
         'project_name': name,
         'project_dir': '.',
         'vivado_version': '2022.1',
@@ -93,30 +99,50 @@ def generate_files(base: str, name: str, file_lists: List[str]) -> None:
             fd.write(rendered)
 
 
-def main(argv: List[str]) -> None:
-    """Main function."""
-    # Build the CLI of script
+def parse_arguments(argv: List[str] = None) -> argparse.Namespace:
+    """Build the CLI of script."""
     parser = argparse.ArgumentParser()
+    # Input and output
     parser.add_argument('flt',
-                        help='Path to .flt file')
-    parser.add_argument('-p',
+                        help='Read input form specified .flt file')
+    parser.add_argument('-p', '--print-only',
                         help='Only print file list then exit',
                         dest='print_only',
                         action='store_true')
-    parser.add_argument('-v',
-                        help='Be verbose',
+    # Debug log level
+    parser.add_argument('-q', '--quiet',
+                        help='Only show error messages',
+                        dest='debug_level',
+                        action='store_const',
+                        const=logging.ERROR,
+                        default=logging.WARNING)
+    parser.add_argument('-v', '--verbose',
+                        help='Show almost all log, except debug messages',
                         dest='debug_level',
                         action='store_const',
                         const=logging.INFO)
-    parser.add_argument('-d',
-                        help='Enable debug log',
+    parser.add_argument('-d', '--debug',
+                        help='Show all log, including debug messages',
                         dest='debug_level',
                         action='store_const',
                         const=logging.DEBUG)
+    # Get the version string of this script.
+    parser.add_argument('-V', '--version',
+                        action='version',
+                        version=__version__)
     args = parser.parse_args(argv)
+    return args
+
+
+def main(argv: List[str] = None) -> None:
+    """This function will be executed if run as script."""
+    args = parse_arguments(argv)
 
     # Set logging level to desired value
     logging.basicConfig(level=args.debug_level)
+    logging.debug(f'Python version: {sys.version.split()[0]}')
+    logging.debug(f'Script version: {__version__}')
+    logging.debug(f'Arguments: {vars(args)}')
 
     top_flt_file = args.flt
     top_flt_file = os.path.abspath(top_flt_file)
@@ -138,13 +164,10 @@ def main(argv: List[str]) -> None:
     if args.print_only:
         for item in file_list:
             print(item)
-    else:
-        generate_files(base_dir, name, file_list)
+        sys.exit(0)
+
+    generate_files(base_dir, name, file_list)
 
 
 if __name__ == '__main__':
-    """
-    This scripts help you generate necessary files to quick restore a Vivado 
-    project.
-    """
     main(sys.argv[1:])
