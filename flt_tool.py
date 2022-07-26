@@ -84,7 +84,7 @@ def generate_files(base: str, name: str, file_lists: List[str]) -> None:
     )
 
     # Render and write target files
-    targets = ['.gitignore', 'Makefile', 'vivado_project.bat', 'vivado_project.tcl']
+    targets = ['.gitignore', 'Makefile', 'vivado_project.sh', 'vivado_project.bat', 'vivado_project.tcl']
     for t in targets:
         template = env.get_template(t + '.jinja2')
         rendered = template.render(variables)
